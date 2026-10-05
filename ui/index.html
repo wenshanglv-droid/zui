@@ -324,7 +324,7 @@ async function refreshEnv() {
     ['Python', env.python || '?'],
     ['torch', env.torch || '?'],
     ['CUDA', env.cuda || 'n/a'],
-    ['注意力', env.attention_in_use || '未安装'],
+    ['加速库', env.attention_in_use || '未安装'],
     ['属性', env.attr || '?'],
   ];
   $('env-cards').innerHTML = cards.map(([k, v]) =>
@@ -398,7 +398,7 @@ async function loadDoctor(bench=false) {
   const head = `<div class="row" style="margin-bottom:8px">
     <span class="pill ${env.torch ? 'ok' : 'idle'}">torch ${env.torch || '?'}</span>
     <span class="pill ${env.cuda ? 'ok' : 'idle'}">CUDA ${env.cuda || 'n/a'}</span>
-    <span class="pill">注意力 ${env.attention_in_use || '?'}</span></div>`;
+    <span class="pill">加速库 ${env.attention_in_use || '?'}</span></div>`;
   const list = (d.findings || []).map(f => {
     const cls = f.status === 'passed' ? 'passed' : (f.status === 'failed' ? 'failed' : (f.status === 'unknown' ? 'unknown' : 'warn'));
     const mk = f.status === 'passed' ? '✔' : (f.status === 'failed' ? '✘' : (f.status === 'unknown' ? '?' : '⚠'));
