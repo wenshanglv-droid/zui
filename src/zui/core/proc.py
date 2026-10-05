@@ -113,15 +113,6 @@ class Supervisor:
         # pidfile 可能陈旧：若端口上已有本实例的 ComfyUI，同样视为运行中，避免重复拉起。
         if self.status(conn, instance).get("running"):
             raise Busy("instance already running (detected on configured port)")
-        # 端口被非本实例的其他程序占用（如另一个 ComfyUI 启动器/终端窗口）：不要静默拉起一个
-        # 会绑定失败的隐藏进程，明确报错让用户先关掉它。
-        check_port = port if port is not None else 8188
-        if not port_available(check_port) and _discover_running_pid(instance, check_port) is None:
-            raise Busy(
-                f"端口 {check_port} 已被其他进程占用（很可能是另一个 ComfyUI 启动器/终端窗口）。"
-                "请先停止它，再点启动。"
-            )
-
         target_log = log_path or _default_log(instance)
         cwd = instance.comfy_dir or instance.root
         env = build_child_env(
