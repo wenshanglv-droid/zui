@@ -613,15 +613,11 @@ $('btn-launch').addEventListener('click', doLaunch);
 $('btn-stop').addEventListener('click', doStop);
 $('btn-doctor').addEventListener('click', () => loadDoctor($('bench').checked));
 $('btn-repair').addEventListener('click', doRepair);
-$('btn-run').addEventListener('click', loadRun);
-$('btn-assets').addEventListener('click', loadAssets);
-$('btn-opt').addEventListener('click', loadOpt);
 $('btn-args-load').addEventListener('click', loadArgs);
 $('btn-args-rec').addEventListener('click', applyRecommended);
 $('btn-args-clear').addEventListener('click', clearArgs);
 $('btn-args-save').addEventListener('click', saveProfile);
 $('btn-dry').addEventListener('click', doDry);
-$('btn-snap').addEventListener('click', loadSnap);
 
 loadInstances();
 setInterval(() => { if (current) refreshStatus(); }, 5000);
