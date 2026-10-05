@@ -43,9 +43,12 @@
   .view { display:none; }
   .view.active { display:block; }
   section.card { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
-                 padding:14px 16px; margin-bottom:14px; }
-  section.card h2 { margin:0 0 10px; font-size:13px; color:var(--dim); font-weight:600;
-                    letter-spacing:.05em; display:flex; align-items:center; gap:8px; }
+                 padding:14px 16px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.25); }
+  section.card h2 { margin:0 -16px 12px; padding:0 16px 10px; border-bottom:1px solid var(--line);
+                    font-size:13px; color:var(--fg); font-weight:600; letter-spacing:.05em;
+                    display:flex; align-items:center; gap:8px; }
+  section.card h2::before { content:""; width:3px; height:14px; border-radius:2px; margin-right:2px;
+                            background:linear-gradient(180deg,var(--acc),var(--purple)); }
   section.card h2 .ref { margin-left:auto; font-size:11px; color:var(--dim); font-weight:400; }
   .toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
   /* stat cards */
