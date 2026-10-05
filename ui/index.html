@@ -364,14 +364,23 @@ function renderChart() {
 function connectLogs() {
   if (wsLog) { wsLog.close(); wsLog = null; }
   if (!current) return;
+  const box = $('logs');
+  // 重连时服务端会重发尾部，先清空避免重复。
+  if (box.dataset.live === '1') box.textContent = '';
+  box.dataset.live = '1';
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   const ws = new WebSocket(`${proto}://${location.host}/ws/logs/${current}`);
-  const box = $('logs');
   ws.onmessage = (ev) => {
     box.textContent += ev.data;
     box.scrollTop = box.scrollHeight;
     if (box.textContent.length > 200000) box.textContent = box.textContent.slice(-200000);
   };
+  ws.onclose = () => {
+    if (wsLog === ws) wsLog = null;
+    box.dataset.live = '0';
+    setTimeout(connectLogs, 2000);
+  };
+  ws.onerror = () => { try { ws.close(); } catch {} };
   wsLog = ws;
 }
 function connectStreams() { connectMetrics(); connectLogs(); }
@@ -580,7 +589,7 @@ async function doLaunch() {
   btn.disabled = false; btn.textContent = old;
   if (d.ok) { toast('已启动', d.url ? `ComfyUI: ${d.url}` : `pid ${d.pid}`, 'ok');
     $('openui').href = d.url || $('openui').href; }
-  else toast('启动失败', d.error || '', 'bad');
+  else toast('启动失败', d.detail || d.error || '', 'bad');
   await refreshStatus();
   showView(activeView);
 }

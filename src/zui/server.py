@@ -62,6 +62,8 @@ def create_app() -> FastAPI:
         instance = _instance(conn, ref)
         try:
             return JSONResponse(_launch_payload(instance, conn, payload))
+        except proc.Busy as exc:
+            return JSONResponse({"ok": False, "error": "busy", "detail": str(exc)}, status_code=200)
         except Exception as exc:  # noqa: BLE001 - never leak a 500 to the UI
             return JSONResponse(
                 {"ok": False, "error": "LAUNCH_FAILED", "detail": str(exc)}, status_code=200
