@@ -92,11 +92,23 @@ def _git_check(
 def _port_check(
     instance: Instance, conn: sqlite3.Connection, ctx: dict[str, Any]
 ) -> tuple[str, str | None]:
-    del instance, conn, ctx
+    del ctx
     owner = _port_owner(8188)
-    if owner:
-        return "failed", f"端口 8188 已被占用: {owner}"
-    return "passed", "端口 8188 空闲"
+    if not owner:
+        return "passed", "端口 8188 空闲"
+    # 若占用者正是本实例正在运行的进程，则属正常（启动后自重用），不算冲突。
+    from zui.core.proc import Supervisor
+
+    running_pid = None
+    try:
+        st = Supervisor().status(conn, instance)
+        if st.get("running"):
+            running_pid = st.get("pid")
+    except Exception:  # noqa: BLE001
+        running_pid = None
+    if running_pid is not None and f"pid={running_pid}" in owner:
+        return "passed", f"端口 8188 被本实例占用（运行中, pid={running_pid}）"
+    return "failed", f"端口 8188 已被占用: {owner}"
 
 
 def _attention_check(

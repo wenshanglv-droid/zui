@@ -93,7 +93,23 @@ def create_app() -> FastAPI:
     def env(ref: str, bench: bool = False) -> JSONResponse:
         conn = _conn()
         instance = _instance(conn, ref)
-        return JSONResponse(env_runtime.inspect(instance, conn=conn, bench=bench))
+        facts = env_runtime.inspect(instance, conn=conn, bench=bench)
+        return JSONResponse(
+            {
+                "env": {
+                    "python": facts.get("python_version"),
+                    "python_path": facts.get("python"),
+                    "torch": facts.get("torch_version"),
+                    "cuda": facts.get("cuda"),
+                    "attention_in_use": facts.get("attention_in_use"),
+                    "attr": facts.get("attr"),
+                },
+                "attr": facts.get("attr"),
+                "packages": facts.get("packages"),
+                "disks": facts.get("disks"),
+                "issues": facts.get("issues"),
+            }
+        )
 
     @api.get("/api/instances/{ref}/run-report")
     def report(ref: str) -> JSONResponse:

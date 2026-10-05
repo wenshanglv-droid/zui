@@ -150,6 +150,8 @@ def inspect(
         if any(item["severity"] == "critical" for item in issues)
         else ("ok" if not issues else "degraded")
     )
+    backends = [b for b in ("sage-attention", "flash_attn", "xformers") if probe.get(b)]
+    attention_label = "已安装 " + ", ".join(backends) if backends else None
     facts = {
         "instance": instance.id,
         "root": str(instance.root),
@@ -159,6 +161,7 @@ def inspect(
         "python_version": probe.get("python"),
         "torch_version": torch_ver,
         "cuda": cuda_ver,
+        "attention_in_use": attention_label,
         "packages": {key: probe.get(key) for key in _PACKAGES},
         "declared_home": str(declared_home) if declared_home else None,
         "disks": disk_report,

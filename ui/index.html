@@ -9,35 +9,50 @@
           --dim:#8b949e; --ok:#3fb950; --warn:#d29922; --bad:#f85149; --acc:#58a6ff;
           --purple:#bc8cff; --radius:12px; }
   * { box-sizing: border-box; }
-  html,body { margin:0; }
+  html,body { margin:0; height:100%; }
   body { background:var(--bg); color:var(--fg);
          font:14px/1.5 -apple-system,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif; }
-  header { display:flex; gap:12px; align-items:center; padding:12px 18px;
-           border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg);
-           flex-wrap:wrap; z-index:20; }
-  header h1 { margin:0; font-size:17px; letter-spacing:.08em;
-              background:linear-gradient(90deg,var(--acc),var(--purple)); -webkit-background-clip:text;
-              background-clip:text; color:transparent; }
+  .app { display:flex; height:100vh; }
   select, button, input { background:#21262d; color:var(--fg); border:1px solid var(--line);
                           border-radius:8px; padding:7px 12px; font-size:13px; cursor:pointer; }
   button:hover { border-color:var(--acc); color:var(--acc); }
-  button:disabled { opacity:.5; cursor:default; }
+  button:disabled { opacity:.45; cursor:default; border-color:var(--line); color:var(--dim); }
   button.primary { background:linear-gradient(90deg,#1f6feb,#388bfd); border-color:#388bfd; color:#fff; }
   button.primary:hover { color:#fff; filter:brightness(1.1); }
   button.danger:hover { border-color:var(--bad); color:var(--bad); }
-  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-  main { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; padding:16px 18px 60px; }
-  section { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
-            padding:14px 16px; min-width:0; }
-  section.wide { grid-column:1/-1; }
-  section h2 { margin:0 0 10px; font-size:13px; color:var(--dim); font-weight:600;
-               letter-spacing:.05em; display:flex; align-items:center; gap:8px; }
-  section h2 .ref { margin-left:auto; font-size:11px; color:var(--dim); font-weight:400; }
+  /* sidebar */
+  .sidebar { width:212px; flex:0 0 212px; background:var(--panel); border-right:1px solid var(--line);
+             display:flex; flex-direction:column; padding:14px 10px; gap:4px; overflow:auto; }
+  .brand { font-size:18px; font-weight:700; letter-spacing:.1em; padding:6px 10px 14px;
+           background:linear-gradient(90deg,var(--acc),var(--purple)); -webkit-background-clip:text;
+           background-clip:text; color:transparent; }
+  .nav { display:flex; align-items:center; gap:10px; text-align:left; border:1px solid transparent;
+         background:transparent; color:var(--fg); padding:10px 12px; border-radius:9px; font-size:13.5px; }
+  .nav:hover { background:var(--panel2); color:var(--fg); }
+  .nav.active { background:linear-gradient(90deg,rgba(88,166,255,.16),rgba(188,140,255,.10));
+                border-color:var(--acc); color:var(--acc); }
+  .nav .ic { font-size:15px; width:18px; text-align:center; }
+  .sidebar .sp { flex:1; }
+  .sidebar .hint { font-size:11px; color:var(--dim); padding:8px 12px; line-height:1.4; }
+  /* main column */
+  .maincol { flex:1; display:flex; flex-direction:column; min-width:0; }
+  header.topbar { display:flex; gap:12px; align-items:center; padding:12px 18px;
+                  border-bottom:1px solid var(--line); background:var(--bg); flex-wrap:wrap; }
+  header.topbar h1 { margin:0; font-size:15px; color:var(--dim); font-weight:600; }
+  #views { flex:1; overflow:auto; padding:16px 18px 60px; }
+  .view { display:none; }
+  .view.active { display:block; }
+  section.card { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+                 padding:14px 16px; margin-bottom:14px; }
+  section.card h2 { margin:0 0 10px; font-size:13px; color:var(--dim); font-weight:600;
+                    letter-spacing:.05em; display:flex; align-items:center; gap:8px; }
+  section.card h2 .ref { margin-left:auto; font-size:11px; color:var(--dim); font-weight:400; }
+  .toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
   /* stat cards */
   .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
   .stat { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
   .stat .k { font-size:11px; color:var(--dim); letter-spacing:.03em; }
-  .stat .v { font-size:18px; font-weight:600; margin-top:2px; }
+  .stat .v { font-size:18px; font-weight:600; margin-top:2px; word-break:break-all; }
   .stat .v small { font-size:11px; color:var(--dim); font-weight:400; }
   /* badges / pills */
   .pill { padding:3px 10px; border-radius:999px; border:1px solid var(--line); font-size:12px; white-space:nowrap; }
@@ -88,7 +103,7 @@
                 word-break:break-all; min-height:46px; }
   /* logs */
   #logs { background:#010409; border:1px solid var(--line); border-radius:8px; padding:10px;
-          height:240px; overflow:auto; font-family:ui-monospace,Consolas,monospace; font-size:12px;
+          height:62vh; overflow:auto; font-family:ui-monospace,Consolas,monospace; font-size:12px;
           white-space:pre-wrap; word-break:break-all; }
   /* cards grid (optimize) */
   .cards2 { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
@@ -108,94 +123,131 @@
   .toast.ok{border-left-color:var(--ok);} .toast.bad{border-left-color:var(--bad);} .toast.warn{border-left-color:var(--warn);}
   .toast .t { font-weight:600; } .toast .d { color:var(--dim); font-size:12px; margin-top:2px; word-break:break-all; }
   @keyframes slide { from { transform:translateX(20px); opacity:0; } to { transform:none; opacity:1; } }
-  @media(max-width:900px){ main{grid-template-columns:1fr;} header h1{width:100%;} }
+  @media(max-width:760px){ .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;} .app{flex-direction:column;} }
 </style>
 </head>
 <body>
-<header>
-  <h1>zui</h1>
-  <select id="instance"></select>
-  <span id="state" class="pill idle">…</span>
-  <span id="mini" class="muted"></span>
-  <span style="flex:1"></span>
-  <div class="row">
-    <button id="btn-launch" class="primary">启动</button>
-    <button id="btn-stop" class="danger">停止</button>
-    <button id="btn-dry">预览命令</button>
-    <button id="btn-doctor">体检</button>
-    <button id="btn-repair">一键修复</button>
-    <button id="btn-run">运行报告</button>
-    <button id="btn-assets">模型</button>
-    <button id="btn-opt">加速</button>
-    <button id="btn-args">参数</button>
-    <button id="btn-snap">快照</button>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">zui</div>
+    <button class="nav active" data-view="overview"><span class="ic">▦</span>概览</button>
+    <button class="nav" data-view="doctor"><span class="ic">✚</span>体检</button>
+    <button class="nav" data-view="run"><span class="ic">⏱</span>运行报告</button>
+    <button class="nav" data-view="assets"><span class="ic">▣</span>模型资产</button>
+    <button class="nav" data-view="opt"><span class="ic">⚡</span>加速建议</button>
+    <button class="nav" data-view="args"><span class="ic">⚙</span>启动参数</button>
+    <button class="nav" data-view="snap"><span class="ic">⎘</span>快照</button>
+    <button class="nav" data-view="logs"><span class="ic">☰</span>实时日志</button>
+    <div class="sp"></div>
+    <div class="hint">功能模块已收进左侧菜单。<br/>启动/停止在右上角。</div>
+  </aside>
+
+  <div class="maincol">
+    <header class="topbar">
+      <h1>实例</h1>
+      <select id="instance"></select>
+      <span id="state" class="pill idle">…</span>
+      <span id="mini" class="muted"></span>
+      <span style="flex:1"></span>
+      <a id="openui" href="#" target="_blank" style="color:var(--acc);font-size:13px">打开 ComfyUI ↗</a>
+      <button id="btn-launch" class="primary">启动</button>
+      <button id="btn-stop" class="danger">停止</button>
+    </header>
+
+    <div id="views">
+      <!-- 概览 -->
+      <section class="view active" id="view-overview">
+        <div class="card">
+          <h2>环境概览 <span class="ref" id="ov-name"></span></h2>
+          <div class="cards" id="env-cards"></div>
+        </div>
+        <div class="card">
+          <h2>实时 GPU <span class="ref">1 Hz · /ws/metrics</span></h2>
+          <div class="cards" id="gpu-cards" style="margin-bottom:10px"></div>
+          <svg class="chart" id="gpu-chart" viewBox="0 0 300 120" preserveAspectRatio="none"></svg>
+          <div class="legend">
+            <span><i style="background:var(--acc)"></i>利用率 %</span>
+            <span><i style="background:var(--purple)"></i>显存占用 %</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 体检 -->
+      <section class="view" id="view-doctor">
+        <div class="card">
+          <h2>体检 <span class="ref" id="doc-meta"></span></h2>
+          <div class="toolbar">
+            <button id="btn-doctor">重新体检</button>
+            <label class="muted"><input type="checkbox" id="bench" style="vertical-align:middle" /> 含磁盘测速</label>
+            <button id="btn-repair" class="danger">一键修复</button>
+          </div>
+          <div id="doctor"></div>
+        </div>
+      </section>
+
+      <!-- 运行报告 -->
+      <section class="view" id="view-run">
+        <div class="card">
+          <h2>运行报告 <span class="ref" id="run-meta"></span></h2>
+          <div id="runreport"></div>
+        </div>
+      </section>
+
+      <!-- 模型资产 -->
+      <section class="view" id="view-assets">
+        <div class="card">
+          <h2>模型资产 <span class="ref" id="asset-meta"></span></h2>
+          <div id="assets"></div>
+        </div>
+      </section>
+
+      <!-- 加速建议 -->
+      <section class="view" id="view-opt">
+        <div class="card">
+          <h2>加速建议 <span class="ref" id="opt-meta"></span></h2>
+          <div id="opt"></div>
+        </div>
+      </section>
+
+      <!-- 启动参数 -->
+      <section class="view" id="view-args">
+        <div class="card">
+          <h2>启动参数 <span class="ref" id="args-meta"></span></h2>
+          <div class="toolbar">
+            <span class="muted">档位</span>
+            <input id="profilename" value="default" style="width:150px" />
+            <button id="btn-args-load">载入参数表</button>
+            <button id="btn-args-rec">套用推荐</button>
+            <button id="btn-args-clear">清空</button>
+            <button id="btn-args-save">保存为档位</button>
+            <button id="btn-dry">预览命令</button>
+          </div>
+          <div id="argsform" style="max-height:320px;overflow:auto"></div>
+          <h2 style="margin:12px 0 6px">命令行预览</h2>
+          <div id="cmdpreview">尚未载入参数表。</div>
+        </div>
+      </section>
+
+      <!-- 快照 -->
+      <section class="view" id="view-snap">
+        <div class="card">
+          <h2>快照 <span class="ref" id="snap-meta"></span></h2>
+          <div id="snap"></div>
+        </div>
+      </section>
+
+      <!-- 实时日志 -->
+      <section class="view" id="view-logs">
+        <div class="card">
+          <h2>实时日志 <span class="ref">/ws/logs</span></h2>
+          <div id="logs"></div>
+        </div>
+      </section>
+    </div>
   </div>
-  <a id="openui" href="#" target="_blank" style="color:var(--acc);font-size:13px">打开 ComfyUI ↗</a>
-</header>
+</div>
 
 <div id="toasts"></div>
-
-<main>
-  <section class="wide">
-    <h2>环境概览 <span class="ref" id="ov-name"></span></h2>
-    <div class="cards" id="env-cards"></div>
-  </section>
-
-  <section>
-    <h2>实时 GPU <span class="ref">1 Hz · /ws/metrics</span></h2>
-    <div class="cards" id="gpu-cards" style="margin-bottom:10px"></div>
-    <svg class="chart" id="gpu-chart" viewBox="0 0 300 120" preserveAspectRatio="none"></svg>
-    <div class="legend">
-      <span><i style="background:var(--acc)"></i>利用率 %</span>
-      <span><i style="background:var(--purple)"></i>显存占用 %</span>
-    </div>
-  </section>
-
-  <section>
-    <h2>体检 <span class="ref" id="doc-meta"></span></h2>
-    <div id="doctor"></div>
-  </section>
-
-  <section class="wide">
-    <h2>运行报告 <span class="ref" id="run-meta"></span></h2>
-    <div id="runreport"></div>
-  </section>
-
-  <section>
-    <h2>模型资产 <span class="ref" id="asset-meta"></span></h2>
-    <div id="assets"></div>
-  </section>
-
-  <section>
-    <h2>加速建议 <span class="ref" id="opt-meta"></span></h2>
-    <div id="opt"></div>
-  </section>
-
-  <section class="wide">
-    <h2>启动参数 <span class="ref" id="args-meta"></span></h2>
-    <div class="row" style="margin-bottom:8px">
-      <span>档位</span>
-      <input id="profilename" value="default" style="width:150px" />
-      <button id="btn-args-load">载入参数表</button>
-      <button id="btn-args-rec">套用推荐</button>
-      <button id="btn-args-clear">清空</button>
-      <button id="btn-args-save">保存为档位</button>
-    </div>
-    <div id="argsform" style="max-height:300px;overflow:auto"></div>
-    <h2 style="margin:12px 0 6px">命令行预览</h2>
-    <div id="cmdpreview">尚未载入参数表。</div>
-  </section>
-
-  <section>
-    <h2>快照 <span class="ref" id="snap-meta"></span></h2>
-    <div id="snap"></div>
-  </section>
-
-  <section class="wide">
-    <h2>实时日志 <span class="ref">/ws/logs</span></h2>
-    <div id="logs"></div>
-  </section>
-</main>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -205,6 +257,7 @@ const fmtGB = (n) => (n == null ? '?' : Number(n).toFixed(1) + ' GB');
 const pct = (a, b) => (b ? Math.min(100, Math.round((a / b) * 100)) : 0);
 
 let current = null;
+let activeView = 'overview';
 let metrics = [];           // {util, vramPct}
 let argFields = [], argState = {};
 let wsLog = null, wsMetrics = null;
@@ -218,6 +271,25 @@ function toast(title, detail, kind='') {
   setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 4200);
 }
 
+/* ---------------- view switching ---------------- */
+const VIEWS = {
+  overview: () => { refreshEnv(); },
+  doctor: () => loadDoctor($('bench').checked),
+  run: () => loadRun(),
+  assets: () => loadAssets(),
+  opt: () => loadOpt(),
+  args: () => loadArgs(),
+  snap: () => loadSnap(),
+  logs: () => {},
+};
+function showView(name) {
+  activeView = name;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const el = $('view-' + name); if (el) el.classList.add('active');
+  document.querySelectorAll('.nav').forEach(n => n.classList.toggle('active', n.dataset.view === name));
+  (VIEWS[name] || (() => {}))();
+}
+
 /* ---------------- instances / status ---------------- */
 async function loadInstances() {
   const data = await api('/api/instances');
@@ -228,7 +300,7 @@ async function loadInstances() {
     o.value = inst.id; o.textContent = `${inst.name} · ${inst.root}`;
     sel.appendChild(o);
   });
-  if (data.instances && data.instances.length) { current = sel.value; await refreshAll(); connectStreams(); }
+  if (data.instances && data.instances.length) { current = sel.value; await refreshStatus(); connectStreams(); showView('overview'); }
 }
 async function refreshStatus() {
   if (!current) return;
@@ -237,7 +309,12 @@ async function refreshStatus() {
   if (st.running) { pill.textContent = `运行中 pid=${st.pid}`; pill.className = 'pill ok'; }
   else if (st.stale) { pill.textContent = '残留进程状态'; pill.className = 'pill warn'; }
   else { pill.textContent = '未运行'; pill.className = 'pill idle'; }
-  $('openui').href = `http://127.0.0.1:${st.port || 8188}`;
+  const port = st.port || 8188;
+  $('openui').href = `http://127.0.0.1:${port}`;
+  // 运行中禁用启动、启用停止；反之相反
+  $('btn-launch').disabled = !!st.running;
+  $('btn-stop').disabled = !st.running;
+  $('mini').textContent = st.running ? `http://127.0.0.1:${port}` : '';
 }
 async function refreshEnv() {
   if (!current) return;
@@ -247,7 +324,7 @@ async function refreshEnv() {
     ['Python', env.python || '?'],
     ['torch', env.torch || '?'],
     ['CUDA', env.cuda || 'n/a'],
-    ['注意力', env.attention_in_use || '?'],
+    ['注意力', env.attention_in_use || '未安装'],
     ['属性', env.attr || '?'],
   ];
   $('env-cards').innerHTML = cards.map(([k, v]) =>
@@ -340,7 +417,7 @@ async function doRepair() {
   const applied = d.applied || [];
   if (applied.length) toast('修复完成', applied.map(a => a.id + (a.ok ? ' ✔' : ' ✘')).join('，'), 'ok');
   else toast('无需修复', '没有可应用的修复项', 'warn');
-  loadDoctor();
+  loadDoctor($('bench').checked);
 }
 
 /* ---------------- run report ---------------- */
@@ -487,6 +564,15 @@ async function saveProfile() {
     headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ args: buildArgs() }) });
   if (d.ok) toast('已保存档位', name, 'ok'); else toast('保存失败', d.error || '', 'bad');
 }
+async function doDry() {
+  const d = await api(`/api/instances/${current}/launch/dry-run`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ port: 8188, profile: $('profilename').value || 'default' }) });
+  if (d.env_diff) $('cmdpreview').textContent =
+    `命令行:\n${(d.argv||[]).join(' ')}\n\n工作目录: ${d.cwd}\n\n环境差异:\n${JSON.stringify(d.env_diff, null, 2)}`;
+  else $('cmdpreview').textContent = (d.argv||[]).join(' ');
+  toast('命令预览', '已写入下方命令行预览', '');
+}
 
 /* ---------------- snapshots ---------------- */
 async function loadSnap() {
@@ -498,7 +584,7 @@ async function loadSnap() {
   $('snap').innerHTML = `<table><thead><tr><th>id</th><th>类型</th><th>备注</th><th>文件</th><th>时间</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-/* ---------------- launch / stop / dry ---------------- */
+/* ---------------- launch / stop ---------------- */
 async function doLaunch() {
   const btn = $('btn-launch'); btn.disabled = true; const old = btn.textContent; btn.textContent = '启动中…';
   const d = await api(`/api/instances/${current}/launch`, { method: 'POST',
@@ -508,48 +594,38 @@ async function doLaunch() {
   if (d.ok) { toast('已启动', d.url ? `ComfyUI: ${d.url}` : `pid ${d.pid}`, 'ok');
     $('openui').href = d.url || $('openui').href; }
   else toast('启动失败', d.error || '', 'bad');
-  refreshStatus();
+  await refreshStatus();
+  showView(activeView);
 }
 async function doStop() {
   const btn = $('btn-stop'); btn.disabled = true; const old = btn.textContent; btn.textContent = '停止中…';
   const d = await api(`/api/instances/${current}/stop`, { method: 'POST' });
   btn.disabled = false; btn.textContent = old;
   toast(d.stopped ? '已停止' : '未运行', '', d.stopped ? 'ok' : 'warn');
-  refreshStatus();
-}
-async function doDry() {
-  const d = await api(`/api/instances/${current}/launch/dry-run`, { method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ port: 8188, profile: $('profilename').value || 'default' }) });
-  if (d.env_diff) $('doctor').innerHTML = `<pre class="raw">命令行:\n${(d.argv||[]).join(' ')}\n\n工作目录: ${d.cwd}\n\n环境差异:\n${JSON.stringify(d.env_diff, null, 2)}</pre>`;
-  else $('doctor').innerHTML = `<pre class="raw">${(d.argv||[]).join(' ')}</pre>`;
-  toast('命令预览', '已切换到体检面板', '');
-  document.querySelector('section:nth-child(3)').scrollIntoView({ behavior: 'smooth' });
+  await refreshStatus();
+  showView(activeView);
 }
 
 /* ---------------- wiring ---------------- */
-$('instance').addEventListener('change', async () => { current = $('instance').value; await refreshAll(); connectStreams(); });
+document.querySelectorAll('.nav').forEach(n => n.addEventListener('click', () => showView(n.dataset.view)));
+$('instance').addEventListener('change', async () => { current = $('instance').value; await refreshStatus(); connectStreams(); showView('overview'); });
 $('btn-launch').addEventListener('click', doLaunch);
 $('btn-stop').addEventListener('click', doStop);
-$('btn-dry').addEventListener('click', doDry);
-$('btn-doctor').addEventListener('click', () => loadDoctor(true));
+$('btn-doctor').addEventListener('click', () => loadDoctor($('bench').checked));
 $('btn-repair').addEventListener('click', doRepair);
 $('btn-run').addEventListener('click', loadRun);
 $('btn-assets').addEventListener('click', loadAssets);
 $('btn-opt').addEventListener('click', loadOpt);
-$('btn-args').addEventListener('click', loadArgs);
-$('btn-snap').addEventListener('click', loadSnap);
 $('btn-args-load').addEventListener('click', loadArgs);
 $('btn-args-rec').addEventListener('click', applyRecommended);
 $('btn-args-clear').addEventListener('click', clearArgs);
 $('btn-args-save').addEventListener('click', saveProfile);
+$('btn-dry').addEventListener('click', doDry);
+$('btn-snap').addEventListener('click', loadSnap);
 
-async function refreshAll() {
-  await Promise.all([refreshStatus(), refreshEnv(), loadDoctor(false), loadRun(), loadAssets(), loadOpt(), loadSnap()]);
-}
 loadInstances();
 setInterval(() => { if (current) refreshStatus(); }, 5000);
-setInterval(() => { if (current) { loadRun(); loadAssets(); loadOpt(); loadSnap(); } }, 20000);
+setInterval(() => { if (current) (VIEWS[activeView] || (() => {}))(); }, 20000);
 </script>
 </body>
 </html>

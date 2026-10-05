@@ -6,6 +6,7 @@ Stopping kills the whole process tree, never "whatever owns the port".
 
 from __future__ import annotations
 
+import re
 import sqlite3
 import time
 from pathlib import Path
@@ -69,6 +70,28 @@ def port_owner(port: int) -> str | None:
     return None
 
 
+def _discover_running_pid(instance: Instance, port: int) -> int | None:
+    """Best-effort: is a ComfyUI for *this* instance actually serving `port`?
+
+    The pidfile can go stale (e.g. the supervisor died but the child survived, or a
+    manual launch used a different pid). The authoritative signal is the listener on
+    the configured port whose command line references this instance's ComfyUI dir.
+    """
+    owner = port_owner(port)
+    if not owner:
+        return None
+    match = re.search(r"pid=(\d+)", owner)
+    if not match:
+        return None
+    pid = int(match.group(1))
+    try:
+        cmd = " ".join(psutil.Process(pid).cmdline())
+    except Exception:  # noqa: BLE001
+        return None
+    target = str(instance.comfy_dir or instance.root)
+    return pid if target and target in cmd else None
+
+
 class Supervisor:
     def __init__(self) -> None:
         self.adapter = get_platform()
@@ -87,6 +110,9 @@ class Supervisor:
         existing = pidfile.read(conn, instance.id)
         if existing is not None and is_alive(existing.pid):
             raise Busy(f"instance already running (pid={existing.pid})")
+        # pidfile 可能陈旧：若端口上已有本实例的 ComfyUI，同样视为运行中，避免重复拉起。
+        if self.status(conn, instance).get("running"):
+            raise Busy("instance already running (detected on configured port)")
 
         target_log = log_path or _default_log(instance)
         cwd = instance.comfy_dir or instance.root
@@ -126,17 +152,30 @@ class Supervisor:
 
     def status(self, conn: sqlite3.Connection, instance: Instance) -> dict[str, object]:
         state = pidfile.read(conn, instance.id)
-        if state is None:
-            return {"running": False, "pid": None}
-        alive = is_alive(state.pid)
-        return {
-            "running": alive,
-            "pid": state.pid if alive else None,
-            "port": state.port,
-            "started_at": state.started_at,
-            "log_path": str(state.log_path) if state.log_path else None,
-            "stale": not alive,
-        }
+        preferred = state.port if (state and state.port) else 8188
+        # 权威判据：本实例的 ComfyUI 是否真在监听该端口（命令行含 comfy_dir）。
+        discovered = _discover_running_pid(instance, preferred)
+        if discovered is not None:
+            return {
+                "running": True,
+                "pid": discovered,
+                "port": preferred,
+                "started_at": state.started_at if state else None,
+                "log_path": str(state.log_path) if state and state.log_path else None,
+                "stale": False,
+            }
+        if state is not None and is_alive(state.pid):
+            return {
+                "running": True,
+                "pid": state.pid,
+                "port": state.port,
+                "started_at": state.started_at,
+                "log_path": str(state.log_path) if state.log_path else None,
+                "stale": False,
+            }
+        if state is not None:
+            pidfile.clear(conn, instance.id)
+        return {"running": False, "pid": None, "stale": state is not None}
 
 
 def pidfile_timestamp() -> str:

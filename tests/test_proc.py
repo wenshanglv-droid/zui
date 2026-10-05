@@ -152,4 +152,4 @@ def test_port_owner_is_diagnostic_only() -> None:
 def test_status_without_state(env: Fixture) -> None:
     conn, inst = env
     status = proc.Supervisor().status(conn, Instance(id=inst.id, name=inst.name, root=inst.root))
-    assert status == {"running": False, "pid": None}
+    assert status == {"running": False, "pid": None, "stale": False}
