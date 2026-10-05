@@ -81,6 +81,23 @@ def _local_app_data() -> Path:
     return Path.home() / "AppData" / "Local"
 
 
+def _headless_python(argv: list[str]) -> list[str]:
+    """把解释器换成同目录的 pythonw.exe（GUI 子系统），让整条进程链都不分配控制台。
+
+    CREATE_NO_WINDOW 只对直接子进程生效；venv 的 python.exe 内部会再次拉起解释器，
+    链路上的后续 console 程序会重新分配控制台，于是弹出可见的终端窗口（表现为新建
+    Windows Terminal / PowerShell 窗口）。pythonw.exe 属于 GUI 子系统，天然没有控制台，
+    其后代也不会新建，从根上消除弹窗。stdout 仍由调用方重定向到日志文件，输出不受影响。
+    """
+    if not argv:
+        return argv
+    head = Path(argv[0])
+    if head.name.lower() != "python.exe":
+        return argv
+    twin = head.with_name("pythonw.exe")
+    return [str(twin), *argv[1:]] if twin.exists() else argv
+
+
 class WindowsAdapter(BasePlatformAdapter):
     name = "windows"
 
@@ -127,9 +144,15 @@ class WindowsAdapter(BasePlatformAdapter):
         if not Path(cwd).exists():
             raise PlatformError(f"working directory does not exist: {cwd}")
 
+        argv = _headless_python(list(argv))
+        # 关键：不要叠加 DETACHED_PROCESS。
+        # MSDN 明确：CREATE_NO_WINDOW 与 CREATE_NEW_CONSOLE 或 DETACHED_PROCESS 同时使用时会被忽略。
+        # 叠加后 python.exe（console 子系统）会重新分配控制台，弹出可见的终端窗口
+        # （表现为新建 Windows Terminal / PowerShell 窗口）。
+        # 只用 CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW 才能真正隐藏窗口；
+        # `new_group` 仅为兼容调用签名保留，不再映射到 DETACHED_PROCESS。
+        _ = new_group
         flags = CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW
-        if new_group:
-            flags |= DETACHED_PROCESS
 
         log_handle = None
         # 双保险：即使父进程是可见控制台，子进程也绝不弹出窗口（输出已重定向到日志文件）。
