@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-05",
+  "notes": "Resolve wheels at runtime through uv for the target python/torch ABI. Never fake a 0% or a success.",
+  "rules": [
+    {
+      "id": "sage-attention-ampere",
+      "package": "sage-attention",
+      "vendor": "nvidia",
+      "compute_capabilities": ["8.0", "8.6", "8.9"],
+      "purpose": "SDPA replacement; commonly 1.3-2x on video diffusion sampling",
+      "cli_flag": "--use-sage-attention",
+      "verify_log": "sage",
+      "risk": "low"
+    },
+    {
+      "id": "flash-attn-ampere",
+      "package": "flash-attn",
+      "vendor": "nvidia",
+      "compute_capabilities": ["8.0", "8.6", "8.9"],
+      "purpose": "FlashAttention-2 alternative when sage-attention is unavailable",
+      "cli_flag": "--use-flash-attention",
+      "verify_log": "flash",
+      "risk": "medium",
+      "note": "Windows wheels are scarce; treat as best-effort and roll back on failure."
+    },
+    {
+      "id": "xformers",
+      "package": "xformers",
+      "vendor": "nvidia",
+      "compute_capabilities": ["7.0", "7.5", "8.0", "8.6", "8.9"],
+      "purpose": "Legacy fallback for older GPUs and workflows",
+      "cli_flag": null,
+      "verify_log": "xformers",
+      "risk": "low"
+    }
+  ],
+  "always_safe_flags": [
+    "--fast fp16_accumulation autotune",
+    "--enable-triton-backend"
+  ],
+  "not_recommended_by_default": [
+    {
+      "flag": "--supports-fp8-compute",
+      "reason": "Requires FP8 tensor cores (Ada/Blackwell); on Ampere it falls back and can be slower."
+    },
+    {
+      "flag": "--fast-disk",
+      "reason": "Disk-backed offload is slower than RAM on mechanical drives."
+    }
+  ]
+}

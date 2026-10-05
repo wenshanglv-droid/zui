@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>zui 工作台</title>
+<style>
+  :root { --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --line:#30363d; --fg:#e6edf3;
+          --dim:#8b949e; --ok:#3fb950; --warn:#d29922; --bad:#f85149; --acc:#58a6ff;
+          --purple:#bc8cff; --radius:12px; }
+  * { box-sizing: border-box; }
+  html,body { margin:0; }
+  body { background:var(--bg); color:var(--fg);
+         font:14px/1.5 -apple-system,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif; }
+  header { display:flex; gap:12px; align-items:center; padding:12px 18px;
+           border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg);
+           flex-wrap:wrap; z-index:20; }
+  header h1 { margin:0; font-size:17px; letter-spacing:.08em;
+              background:linear-gradient(90deg,var(--acc),var(--purple)); -webkit-background-clip:text;
+              background-clip:text; color:transparent; }
+  select, button, input { background:#21262d; color:var(--fg); border:1px solid var(--line);
+                          border-radius:8px; padding:7px 12px; font-size:13px; cursor:pointer; }
+  button:hover { border-color:var(--acc); color:var(--acc); }
+  button:disabled { opacity:.5; cursor:default; }
+  button.primary { background:linear-gradient(90deg,#1f6feb,#388bfd); border-color:#388bfd; color:#fff; }
+  button.primary:hover { color:#fff; filter:brightness(1.1); }
+  button.danger:hover { border-color:var(--bad); color:var(--bad); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  main { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; padding:16px 18px 60px; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+            padding:14px 16px; min-width:0; }
+  section.wide { grid-column:1/-1; }
+  section h2 { margin:0 0 10px; font-size:13px; color:var(--dim); font-weight:600;
+               letter-spacing:.05em; display:flex; align-items:center; gap:8px; }
+  section h2 .ref { margin-left:auto; font-size:11px; color:var(--dim); font-weight:400; }
+  /* stat cards */
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+  .stat { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  .stat .k { font-size:11px; color:var(--dim); letter-spacing:.03em; }
+  .stat .v { font-size:18px; font-weight:600; margin-top:2px; }
+  .stat .v small { font-size:11px; color:var(--dim); font-weight:400; }
+  /* badges / pills */
+  .pill { padding:3px 10px; border-radius:999px; border:1px solid var(--line); font-size:12px; white-space:nowrap; }
+  .pill.ok{color:var(--ok);border-color:var(--ok);} .pill.warn{color:var(--warn);border-color:var(--warn);}
+  .pill.bad{color:var(--bad);border-color:var(--bad);} .pill.idle{color:var(--dim);}
+  .badge { display:inline-block; padding:1px 7px; border-radius:6px; font-size:11px; margin-left:6px; }
+  .badge.risk-low{background:#0f1a26;color:var(--ok);border:1px solid var(--ok);}
+  .badge.risk-med{background:#1f1a08;color:var(--warn);border:1px solid var(--warn);}
+  .badge.risk-high{background:#1f0d0d;color:var(--bad);border:1px solid var(--bad);}
+  .badge.yes{background:#0f1a26;color:var(--ok);border:1px solid var(--ok);}
+  .badge.no{background:#21262d;color:var(--dim);border:1px solid var(--line);}
+  /* findings */
+  .find { display:flex; gap:10px; padding:8px 10px; border-radius:8px; margin-bottom:6px; align-items:flex-start;
+          background:var(--panel2); border:1px solid var(--line); }
+  .find .mk { font-size:16px; line-height:1; margin-top:1px; }
+  .find.passed .mk{color:var(--ok);} .find.failed .mk{color:var(--bad);} .find.warn .mk{color:var(--warn);}
+  .find.unknown .mk{color:var(--dim);}
+  .find .tt { font-weight:600; }
+  .find .dt { color:var(--dim); font-size:12.5px; }
+  .find .fx { color:var(--acc); font-size:12px; margin-top:2px; }
+  /* tables */
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  th,td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  th { color:var(--dim); font-weight:600; font-size:11px; letter-spacing:.03em; }
+  /* bars */
+  .bar { height:10px; background:#21262d; border-radius:6px; overflow:hidden; }
+  .bar > i { display:block; height:100%; background:linear-gradient(90deg,var(--acc),var(--purple)); }
+  .barwrap { display:grid; grid-template-columns:130px 1fr 70px; gap:8px; align-items:center; margin:5px 0; font-size:12.5px; }
+  /* gauge */
+  .gauge { display:flex; flex-direction:column; gap:6px; }
+  .gauge .big { font-size:22px; font-weight:700; }
+  /* chart */
+  .chart { width:100%; height:120px; display:block; background:#010409; border:1px solid var(--line);
+           border-radius:10px; }
+  .legend { display:flex; gap:14px; font-size:11px; color:var(--dim); margin-top:6px; }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:4px; vertical-align:middle; }
+  /* args */
+  .argsec { border-top:1px solid var(--line); padding:8px 0 2px; }
+  .argsec h3 { margin:6px 0; font-size:12.5px; color:var(--acc); letter-spacing:.04em; }
+  .argrow { display:grid; grid-template-columns:24px 210px 1fr auto; gap:8px; align-items:center;
+            padding:3px 0; font-size:12.5px; }
+  .argrow.on { background:#0f1a26; border-radius:6px; }
+  .argrow .flag { color:var(--dim); font-family:ui-monospace,Consolas,monospace; }
+  .argrow .hint { color:var(--dim); font-size:11px; }
+  .rec { color:var(--warn); font-size:11px; border:1px solid var(--warn); border-radius:999px; padding:0 6px; }
+  #cmdpreview { background:#010409; border:1px solid var(--line); border-radius:8px; padding:10px;
+                font-family:ui-monospace,Consolas,monospace; font-size:12px; white-space:pre-wrap;
+                word-break:break-all; min-height:46px; }
+  /* logs */
+  #logs { background:#010409; border:1px solid var(--line); border-radius:8px; padding:10px;
+          height:240px; overflow:auto; font-family:ui-monospace,Consolas,monospace; font-size:12px;
+          white-space:pre-wrap; word-break:break-all; }
+  /* cards grid (optimize) */
+  .cards2 { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; }
+  .ocard { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+           display:flex; flex-direction:column; gap:6px; }
+  .ocard .nm { font-weight:600; }
+  .ocard .pp { color:var(--dim); font-size:12px; }
+  pre.raw { margin:0; white-space:pre-wrap; word-break:break-word; font-size:12px; max-height:300px; overflow:auto;
+            background:#010409; border:1px solid var(--line); border-radius:8px; padding:10px; }
+  .muted { color:var(--dim); font-size:12.5px; }
+  .empty { color:var(--dim); font-style:italic; padding:8px 0; }
+  /* toasts */
+  #toasts { position:fixed; top:14px; right:16px; display:flex; flex-direction:column; gap:8px; z-index:50; }
+  .toast { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--acc);
+           border-radius:10px; padding:10px 14px; min-width:200px; max-width:340px; font-size:13px;
+           box-shadow:0 8px 24px rgba(0,0,0,.4); animation:slide .2s ease; }
+  .toast.ok{border-left-color:var(--ok);} .toast.bad{border-left-color:var(--bad);} .toast.warn{border-left-color:var(--warn);}
+  .toast .t { font-weight:600; } .toast .d { color:var(--dim); font-size:12px; margin-top:2px; word-break:break-all; }
+  @keyframes slide { from { transform:translateX(20px); opacity:0; } to { transform:none; opacity:1; } }
+  @media(max-width:900px){ main{grid-template-columns:1fr;} header h1{width:100%;} }
+</style>
+</head>
+<body>
+<header>
+  <h1>zui</h1>
+  <select id="instance"></select>
+  <span id="state" class="pill idle">…</span>
+  <span id="mini" class="muted"></span>
+  <span style="flex:1"></span>
+  <div class="row">
+    <button id="btn-launch" class="primary">启动</button>
+    <button id="btn-stop" class="danger">停止</button>
+    <button id="btn-dry">预览命令</button>
+    <button id="btn-doctor">体检</button>
+    <button id="btn-repair">一键修复</button>
+    <button id="btn-run">运行报告</button>
+    <button id="btn-assets">模型</button>
+    <button id="btn-opt">加速</button>
+    <button id="btn-args">参数</button>
+    <button id="btn-snap">快照</button>
+  </div>
+  <a id="openui" href="#" target="_blank" style="color:var(--acc);font-size:13px">打开 ComfyUI ↗</a>
+</header>
+
+<div id="toasts"></div>
+
+<main>
+  <section class="wide">
+    <h2>环境概览 <span class="ref" id="ov-name"></span></h2>
+    <div class="cards" id="env-cards"></div>
+  </section>
+
+  <section>
+    <h2>实时 GPU <span class="ref">1 Hz · /ws/metrics</span></h2>
+    <div class="cards" id="gpu-cards" style="margin-bottom:10px"></div>
+    <svg class="chart" id="gpu-chart" viewBox="0 0 300 120" preserveAspectRatio="none"></svg>
+    <div class="legend">
+      <span><i style="background:var(--acc)"></i>利用率 %</span>
+      <span><i style="background:var(--purple)"></i>显存占用 %</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>体检 <span class="ref" id="doc-meta"></span></h2>
+    <div id="doctor"></div>
+  </section>
+
+  <section class="wide">
+    <h2>运行报告 <span class="ref" id="run-meta"></span></h2>
+    <div id="runreport"></div>
+  </section>
+
+  <section>
+    <h2>模型资产 <span class="ref" id="asset-meta"></span></h2>
+    <div id="assets"></div>
+  </section>
+
+  <section>
+    <h2>加速建议 <span class="ref" id="opt-meta"></span></h2>
+    <div id="opt"></div>
+  </section>
+
+  <section class="wide">
+    <h2>启动参数 <span class="ref" id="args-meta"></span></h2>
+    <div class="row" style="margin-bottom:8px">
+      <span>档位</span>
+      <input id="profilename" value="default" style="width:150px" />
+      <button id="btn-args-load">载入参数表</button>
+      <button id="btn-args-rec">套用推荐</button>
+      <button id="btn-args-clear">清空</button>
+      <button id="btn-args-save">保存为档位</button>
+    </div>
+    <div id="argsform" style="max-height:300px;overflow:auto"></div>
+    <h2 style="margin:12px 0 6px">命令行预览</h2>
+    <div id="cmdpreview">尚未载入参数表。</div>
+  </section>
+
+  <section>
+    <h2>快照 <span class="ref" id="snap-meta"></span></h2>
+    <div id="snap"></div>
+  </section>
+
+  <section class="wide">
+    <h2>实时日志 <span class="ref">/ws/logs</span></h2>
+    <div id="logs"></div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const api = (path, opts) => fetch(path, opts).then(r => r.json().catch(() => ({error:'bad json'})));
+const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const fmtGB = (n) => (n == null ? '?' : Number(n).toFixed(1) + ' GB');
+const pct = (a, b) => (b ? Math.min(100, Math.round((a / b) * 100)) : 0);
+
+let current = null;
+let metrics = [];           // {util, vramPct}
+let argFields = [], argState = {};
+let wsLog = null, wsMetrics = null;
+
+/* ---------------- toasts ---------------- */
+function toast(title, detail, kind='') {
+  const t = document.createElement('div');
+  t.className = 'toast ' + kind;
+  t.innerHTML = `<div class="t">${esc(title)}</div>` + (detail ? `<div class="d">${esc(detail)}</div>` : '');
+  $('toasts').appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 4200);
+}
+
+/* ---------------- instances / status ---------------- */
+async function loadInstances() {
+  const data = await api('/api/instances');
+  const sel = $('instance');
+  sel.innerHTML = '';
+  (data.instances || []).forEach(inst => {
+    const o = document.createElement('option');
+    o.value = inst.id; o.textContent = `${inst.name} · ${inst.root}`;
+    sel.appendChild(o);
+  });
+  if (data.instances && data.instances.length) { current = sel.value; await refreshAll(); connectStreams(); }
+}
+async function refreshStatus() {
+  if (!current) return;
+  const st = await api(`/api/instances/${current}/status`);
+  const pill = $('state');
+  if (st.running) { pill.textContent = `运行中 pid=${st.pid}`; pill.className = 'pill ok'; }
+  else if (st.stale) { pill.textContent = '残留进程状态'; pill.className = 'pill warn'; }
+  else { pill.textContent = '未运行'; pill.className = 'pill idle'; }
+  $('openui').href = `http://127.0.0.1:${st.port || 8188}`;
+}
+async function refreshEnv() {
+  if (!current) return;
+  const d = await api(`/api/instances/${current}/env`);
+  const env = d.env || {};
+  const cards = [
+    ['Python', env.python || '?'],
+    ['torch', env.torch || '?'],
+    ['CUDA', env.cuda || 'n/a'],
+    ['注意力', env.attention_in_use || '?'],
+    ['属性', env.attr || '?'],
+  ];
+  $('env-cards').innerHTML = cards.map(([k, v]) =>
+    `<div class="stat"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join('');
+  $('ov-name').textContent = current;
+}
+
+/* ---------------- GPU live ---------------- */
+function connectMetrics() {
+  if (wsMetrics) return;
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}/ws/metrics`);
+  ws.onmessage = (ev) => {
+    let d; try { d = JSON.parse(ev.data); } catch { return; }
+    const v = d.values || {};
+    const used = v['vram.used'] || 0, total = v['vram.total'] || 0;
+    metrics.push({ util: Number(v.util || 0), vramPct: pct(used, total) });
+    if (metrics.length > 60) metrics.shift();
+    renderGpu(v, used, total);
+  };
+  ws.onclose = () => { wsMetrics = null; setTimeout(connectMetrics, 2000); };
+  wsMetrics = ws;
+}
+function renderGpu(v, used, total) {
+  $('gpu-cards').innerHTML = [
+    ['GPU', v.name || '?'],
+    ['架构', v.arch || '?'],
+    ['利用率', `${Math.round(Number(v.util || 0))}%`],
+    ['显存', `${fmtGB(used/1024/1024/1024)} / ${fmtGB(total/1024/1024/1024)}`],
+  ].map(([k, val]) => `<div class="stat"><div class="k">${esc(k)}</div><div class="v">${esc(val)}</div></div>`).join('')
+  + (v.temp ? `<div class="stat"><div class="k">温度</div><div class="v">${Math.round(v.temp)}°C</div></div>` : '')
+  + (v.power ? `<div class="stat"><div class="k">功耗</div><div class="v">${Math.round(v.power)} W</div></div>` : '');
+  renderChart();
+}
+function renderChart() {
+  const W = 300, H = 120, pad = 6;
+  const series = (arr, max) => {
+    if (!arr.length) return '';
+    const step = arr.length > 1 ? (W - pad * 2) / (arr.length - 1) : 0;
+    return arr.map((val, i) => `${(pad + i * step).toFixed(1)},${(H - pad - (Math.min(val, max) / max) * (H - pad * 2)).toFixed(1)}`).join(' ');
+  };
+  const u = series(metrics.map(m => m.util), 100);
+  const mem = series(metrics.map(m => m.vramPct), 100);
+  $('gpu-chart').innerHTML =
+    `<polyline fill="none" stroke="var(--purple)" stroke-width="1.6" points="${mem}"/>` +
+    `<polyline fill="none" stroke="var(--acc)" stroke-width="1.6" points="${u}"/>`;
+}
+
+/* ---------------- logs ---------------- */
+function connectLogs() {
+  if (wsLog) { wsLog.close(); wsLog = null; }
+  if (!current) return;
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}/ws/logs/${current}`);
+  const box = $('logs');
+  ws.onmessage = (ev) => {
+    box.textContent += ev.data;
+    box.scrollTop = box.scrollHeight;
+    if (box.textContent.length > 200000) box.textContent = box.textContent.slice(-200000);
+  };
+  wsLog = ws;
+}
+function connectStreams() { connectMetrics(); connectLogs(); }
+
+/* ---------------- doctor ---------------- */
+async function loadDoctor(bench=false) {
+  $('doctor').innerHTML = '<div class="muted">体检中…</div>';
+  const d = await api(`/api/instances/${current}/doctor?bench=${bench}`);
+  $('doc-meta').textContent = d.attr ? `环境 ${d.attr}` : '';
+  const env = d.env || {};
+  const head = `<div class="row" style="margin-bottom:8px">
+    <span class="pill ${env.torch ? 'ok' : 'idle'}">torch ${env.torch || '?'}</span>
+    <span class="pill ${env.cuda ? 'ok' : 'idle'}">CUDA ${env.cuda || 'n/a'}</span>
+    <span class="pill">注意力 ${env.attention_in_use || '?'}</span></div>`;
+  const list = (d.findings || []).map(f => {
+    const cls = f.status === 'passed' ? 'passed' : (f.status === 'failed' ? 'failed' : (f.status === 'unknown' ? 'unknown' : 'warn'));
+    const mk = f.status === 'passed' ? '✔' : (f.status === 'failed' ? '✘' : (f.status === 'unknown' ? '?' : '⚠'));
+    return `<div class="find ${cls}"><div class="mk">${mk}</div><div>
+      <div class="tt">${esc(f.title)} <small class="muted">[${esc(f.severity)}]</small></div>
+      <div class="dt">${esc(f.detail || '')}</div>
+      ${f.fix ? `<div class="fx">修复: ${esc(f.fix)}</div>` : ''}</div></div>`;
+  }).join('') || '<div class="empty">无检查项</div>';
+  $('doctor').innerHTML = head + list;
+}
+async function doRepair() {
+  const btn = $('btn-repair'); btn.disabled = true; const old = btn.textContent; btn.textContent = '修复中…';
+  const d = await api(`/api/instances/${current}/repair`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ apply: true }) });
+  btn.disabled = false; btn.textContent = old;
+  const applied = d.applied || [];
+  if (applied.length) toast('修复完成', applied.map(a => a.id + (a.ok ? ' ✔' : ' ✘')).join('，'), 'ok');
+  else toast('无需修复', '没有可应用的修复项', 'warn');
+  loadDoctor();
+}
+
+/* ---------------- run report ---------------- */
+async function loadRun() {
+  const d = await api(`/api/instances/${current}/run-report`);
+  if (!d.found) { $('runreport').innerHTML = '<div class="empty">未找到 ComfyUI 日志，先启动并出图一次</div>'; return; }
+  $('run-meta').textContent = `日志: ${esc((d.path || '').split(/[\\/]/).pop())}`;
+  const runs = (d.runs || []).map((r, i) => {
+    const total = r.total_seconds || 0;
+    const load = (r.loads || []).reduce((s, l) => s + (l.seconds || 0), 0);
+    const samp = (r.sampling || {}).seconds || 0;
+    const other = r.other_seconds || 0;
+    const seg = (w, c) => w ? `<i style="width:${(w / total * 100).toFixed(1)}%;background:${c};display:inline-block;height:100%"></i>` : '';
+    const loadsTxt = (r.loads || []).map(l => `${l.model}: ${l.seconds}s`).join('，') || '—';
+    const rate = (r.sampling || {}).rate_s_per_it;
+    return `<div class="barwrap" style="grid-template-columns:90px 1fr 60px">
+        <span>第 ${i + 1} 次</span>
+        <span class="bar">${seg(load, 'var(--acc)')}${seg(samp, 'var(--ok)')}${seg(other, 'var(--dim)')}</span>
+        <span class="muted">${total}s</span></div>
+      <div class="muted" style="margin:-2px 0 8px 90px">加载 ${load}s（${esc(loadsTxt)}）· 采样 ${samp}s${
+        rate ? ` · <b style="color:var(--ok)">${rate} s/it</b> × ${(r.sampling || {}).steps} 步` : ''} · 其它 ${other}s</div>`;
+  }).join('');
+  const tips = (d.suggestions || []).map(s => `<li>${esc(s)}</li>`).join('') || '<li class="muted">无明显瓶颈</li>';
+  $('runreport').innerHTML = `<div class="row" style="margin-bottom:6px">
+      <span class="pill">总运行 ${d.runs.length} 次</span>
+      <span class="muted">图例：<i style="color:var(--acc)">■</i>加载 <i style="color:var(--ok)">■</i>采样 <i style="color:var(--dim)">■</i>其它</span>
+    </div>${runs}<div style="margin-top:8px"><b>建议</b><ul style="margin:4px 0;padding-left:18px">${tips}</ul></div>`;
+}
+
+/* ---------------- assets ---------------- */
+async function loadAssets() {
+  const d = await api(`/api/instances/${current}/assets`);
+  $('asset-meta').textContent = `${d.files || 0} 文件 · ${fmtGB(d.total_gb||0)}`;
+  const fam = Object.entries(d.families || {}).sort((a, b) => b[1] - a[1]);
+  const famMax = fam.length ? fam[0][1] : 1;
+  const famBars = fam.map(([k, v]) =>
+    `<div class="barwrap"><span>${esc(k)}</span><span class="bar"><i style="width:${(v / famMax * 100).toFixed(1)}%"></i></span><span class="muted">${fmtGB(v)}</span></div>`).join('')
+    || '<div class="empty">无模型</div>';
+  const dups = (d.duplicates || []).map(x =>
+    `<tr><td>${esc(x.key)}</td><td>${esc(x.by)}</td><td>${x.count}</td><td>${fmtGB(x.reclaimable_gb||0)}</td>
+      <td class="muted">${(x.paths||[]).map(p=>p.split(/[\\/]/).pop()).join('，')}</td></tr>`).join('')
+    || '<tr><td colspan="5" class="empty">无重复</td></tr>';
+  const largest = (d.largest || []).slice(0, 8).map(x =>
+    `<tr><td>${esc(x.name)}</td><td>${esc(x.family||'')}</td><td>${fmtGB(x.gb||0)}</td></tr>`).join('')
+    || '<tr><td colspan="3" class="empty">—</td></tr>';
+  $('assets').innerHTML = `
+    <div style="font-weight:600;margin:4px 0 6px;color:var(--dim)">按家族占用</div>${famBars}
+    <div style="font-weight:600;margin:12px 0 4px;color:var(--dim)">重复项（可回收）</div>
+    <table><thead><tr><th>key</th><th>判重</th><th>份数</th><th>可回收</th><th>文件</th></tr></thead><tbody>${dups}</tbody></table>
+    <div style="font-weight:600;margin:12px 0 4px;color:var(--dim)">最大文件</div>
+    <table><thead><tr><th>名称</th><th>家族</th><th>大小</th></tr></thead><tbody>${largest}</tbody></table>`;
+}
+
+/* ---------------- optimize ---------------- */
+async function loadOpt() {
+  const d = await api(`/api/instances/${current}/optimize`);
+  $('opt-meta').textContent = `架构 ${d.arch || '?'} · ${esc(d.gpu || '')}`;
+  const cards = (d.candidates || []).map(c => {
+    const risk = c.risk || 'unknown';
+    const rb = risk === 'low' ? 'risk-low' : (risk === 'med' ? 'risk-med' : 'risk-high');
+    const inst = c.installed ? '<span class="badge yes">已装</span>' : '<span class="badge no">未装</span>';
+    const btn = c.installed ? '' :
+      `<button data-rule="${esc(c.id)}" class="opt-apply" style="margin-top:4px">一键安装</button>`;
+    return `<div class="ocard"><div class="nm">${esc(c.package)} ${inst}</div>
+      <div class="pp">${esc(c.purpose || '')}</div>
+      <div><span class="badge ${rb}">风险 ${esc(risk)}</span>${c.cli_flag ? `<span class="muted"> ${esc(c.cli_flag)}</span>` : ''}</div>
+      <div class="pp">${esc(c.note || '')}</div>${btn}</div>`;
+  }).join('') || '<div class="empty">无候选后端</div>';
+  const safeflags = (d.always_safe_flags || []).join('，');
+  $('opt').innerHTML = `<div class="cards2">${cards}</div>` +
+    (safeflags ? `<div class="muted" style="margin-top:8px">始终安全参数: ${esc(safeflags)}</div>` : '');
+  document.querySelectorAll('.opt-apply').forEach(b => b.addEventListener('click', () => applyOpt(b)));
+}
+async function applyOpt(btn) {
+  const rule = btn.dataset.rule; btn.disabled = true; btn.textContent = '安装中…';
+  const d = await api(`/api/instances/${current}/optimize/apply`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rule }) });
+  if (d.ok) toast('加速后端已装', d.command || rule, 'ok');
+  else toast('安装失败', d.error || d.stderr || '未知错误', 'bad');
+  loadOpt();
+}
+
+/* ---------------- args ---------------- */
+async function loadArgs() {
+  const d = await api(`/api/instances/${current}/args`);
+  if (!d.ok) { $('argsform').innerHTML = `<div class="empty">${esc(d.detail || '参数表不可用')}</div>`; return; }
+  argFields = []; argState = {};
+  const box = $('argsform'); box.innerHTML = '';
+  (d.sections || []).forEach(sec => {
+    const wrap = document.createElement('div'); wrap.className = 'argsec';
+    wrap.innerHTML = `<h3>${esc(sec.title)}</h3>`;
+    (sec.fields || []).forEach(f => {
+      argFields.push(f); argState[f.flag] = { on: false, value: f.default || '' };
+      const row = document.createElement('div'); row.className = 'argrow';
+      row.innerHTML = `<input type="checkbox" data-flag="${esc(f.flag)}" />
+        <span class="flag">${esc(f.flag)}${f.recommended ? '<span class="rec">推荐</span>' : ''}</span>
+        <span>${esc(f.label || '')}<span class="hint"> ${esc(f.hint || f.help || '')}</span></span>
+        <span class="value"></span>`;
+      wrap.appendChild(row);
+      const holder = row.querySelector('.value');
+      const cb = row.querySelector('input[type=checkbox]');
+      cb.addEventListener('change', () => { argState[f.flag].on = cb.checked; row.classList.toggle('on', cb.checked); renderCmd(); });
+      if (f.kind === 'choice' && f.choices) {
+        const sel = document.createElement('select');
+        f.choices.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+        sel.addEventListener('change', () => { argState[f.flag].value = sel.value; renderCmd(); });
+        holder.appendChild(sel);
+      } else if (f.kind !== 'bool') {
+        const inp = document.createElement('input'); inp.style.width = '120px';
+        inp.placeholder = f.kind === 'int' || f.kind === 'float' ? f.kind : 'value';
+        inp.addEventListener('input', () => { argState[f.flag].value = inp.value; renderCmd(); });
+        holder.appendChild(inp);
+      }
+    });
+    box.appendChild(wrap);
+  });
+  $('args-meta').textContent = `${(d.sections||[]).reduce((n,s)=>n+(s.fields||[]).length,0)} 个参数 · 来源: ${esc(d.source||'')}`;
+  renderCmd();
+}
+function applyRecommended() {
+  argFields.forEach(f => { if (!f.recommended) return;
+    const cb = document.querySelector(`input[data-flag="${CSS.escape(f.flag)}"]`);
+    if (cb && !cb.checked) { cb.checked = true; cb.dispatchEvent(new Event('change')); } });
+}
+function clearArgs() {
+  argFields.forEach(f => { const cb = document.querySelector(`input[data-flag="${CSS.escape(f.flag)}"]`);
+    if (cb && cb.checked) { cb.checked = false; cb.dispatchEvent(new Event('change')); } });
+}
+function buildArgs() {
+  const out = [];
+  argFields.forEach(f => { const st = argState[f.flag]; if (!st || !st.on) return;
+    out.push(f.flag);
+    if (f.kind === 'bool') return;
+    if (st.value !== '' && st.value != null) out.push(...String(st.value).split(/\s+/).filter(Boolean)); });
+  return out;
+}
+function renderCmd() {
+  const args = buildArgs(); const port = 8188;
+  $('cmdpreview').textContent = `<python> -X utf8 main.py --port ${port}` + (args.length ? ' ' + args.join(' ') : '');
+}
+async function saveProfile() {
+  const name = $('profilename').value || 'default';
+  const d = await api(`/api/instances/${current}/profiles/${encodeURIComponent(name)}`, { method: 'PUT',
+    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ args: buildArgs() }) });
+  if (d.ok) toast('已保存档位', name, 'ok'); else toast('保存失败', d.error || '', 'bad');
+}
+
+/* ---------------- snapshots ---------------- */
+async function loadSnap() {
+  const d = await api(`/api/snapshots/${current}`);
+  const rows = (d.snapshots || []).map(s =>
+    `<tr><td>${esc(s.id || '')}</td><td>${esc(s.kind || '')}</td><td>${esc(s.note || '')}</td>
+      <td class="muted">${(s.files||[]).length} 文件</td><td class="muted">${esc((s.created_at||'').replace('T',' ').slice(0,19))}</td></tr>`).join('')
+    || '<tr><td colspan="5" class="empty">无快照</td></tr>';
+  $('snap').innerHTML = `<table><thead><tr><th>id</th><th>类型</th><th>备注</th><th>文件</th><th>时间</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/* ---------------- launch / stop / dry ---------------- */
+async function doLaunch() {
+  const btn = $('btn-launch'); btn.disabled = true; const old = btn.textContent; btn.textContent = '启动中…';
+  const d = await api(`/api/instances/${current}/launch`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ port: 8188, profile: $('profilename').value || 'default' }) });
+  btn.disabled = false; btn.textContent = old;
+  if (d.ok) { toast('已启动', d.url ? `ComfyUI: ${d.url}` : `pid ${d.pid}`, 'ok');
+    $('openui').href = d.url || $('openui').href; }
+  else toast('启动失败', d.error || '', 'bad');
+  refreshStatus();
+}
+async function doStop() {
+  const btn = $('btn-stop'); btn.disabled = true; const old = btn.textContent; btn.textContent = '停止中…';
+  const d = await api(`/api/instances/${current}/stop`, { method: 'POST' });
+  btn.disabled = false; btn.textContent = old;
+  toast(d.stopped ? '已停止' : '未运行', '', d.stopped ? 'ok' : 'warn');
+  refreshStatus();
+}
+async function doDry() {
+  const d = await api(`/api/instances/${current}/launch/dry-run`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ port: 8188, profile: $('profilename').value || 'default' }) });
+  if (d.env_diff) $('doctor').innerHTML = `<pre class="raw">命令行:\n${(d.argv||[]).join(' ')}\n\n工作目录: ${d.cwd}\n\n环境差异:\n${JSON.stringify(d.env_diff, null, 2)}</pre>`;
+  else $('doctor').innerHTML = `<pre class="raw">${(d.argv||[]).join(' ')}</pre>`;
+  toast('命令预览', '已切换到体检面板', '');
+  document.querySelector('section:nth-child(3)').scrollIntoView({ behavior: 'smooth' });
+}
+
+/* ---------------- wiring ---------------- */
+$('instance').addEventListener('change', async () => { current = $('instance').value; await refreshAll(); connectStreams(); });
+$('btn-launch').addEventListener('click', doLaunch);
+$('btn-stop').addEventListener('click', doStop);
+$('btn-dry').addEventListener('click', doDry);
+$('btn-doctor').addEventListener('click', () => loadDoctor(true));
+$('btn-repair').addEventListener('click', doRepair);
+$('btn-run').addEventListener('click', loadRun);
+$('btn-assets').addEventListener('click', loadAssets);
+$('btn-opt').addEventListener('click', loadOpt);
+$('btn-args').addEventListener('click', loadArgs);
+$('btn-snap').addEventListener('click', loadSnap);
+$('btn-args-load').addEventListener('click', loadArgs);
+$('btn-args-rec').addEventListener('click', applyRecommended);
+$('btn-args-clear').addEventListener('click', clearArgs);
+$('btn-args-save').addEventListener('click', saveProfile);
+
+async function refreshAll() {
+  await Promise.all([refreshStatus(), refreshEnv(), loadDoctor(false), loadRun(), loadAssets(), loadOpt(), loadSnap()]);
+}
+loadInstances();
+setInterval(() => { if (current) refreshStatus(); }, 5000);
+setInterval(() => { if (current) { loadRun(); loadAssets(); loadOpt(); loadSnap(); } }, 20000);
+</script>
+</body>
+</html>

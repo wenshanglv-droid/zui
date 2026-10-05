@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-05",
+  "notes": "Verified entries are observed from a real install; unverified entries carry \"verified\": false.",
+  "stacks": [
+    {
+      "id": "nvidia-cu130",
+      "vendor": "nvidia",
+      "label": "NVIDIA CUDA 13.0",
+      "python": "3.13.12",
+      "python_source": "python-build-standalone",
+      "index_url": "https://download.pytorch.org/whl/cu130",
+      "packages": {
+        "torch": "2.12.1+cu130",
+        "torchvision": "0.27.1+cu130",
+        "torchaudio": "2.11.0+cu130"
+      },
+      "verified_with_comfyui": ["v0.34.0", "v0.37.0"],
+      "verified": true,
+      "source": "observed on a local ComfyUI standalone install"
+    },
+    {
+      "id": "nvidia-cu128",
+      "vendor": "nvidia",
+      "label": "NVIDIA CUDA 12.8",
+      "python": "3.12",
+      "python_source": "python-build-standalone",
+      "index_url": "https://download.pytorch.org/whl/cu128",
+      "packages": { "torch": null, "torchvision": null, "torchaudio": null },
+      "verified_with_comfyui": [],
+      "verified": false
+    },
+    {
+      "id": "cpu",
+      "vendor": "cpu",
+      "label": "CPU only",
+      "python": "3.12",
+      "python_source": "python-build-standalone",
+      "index_url": "https://download.pytorch.org/whl/cpu",
+      "packages": { "torch": null, "torchvision": null, "torchaudio": null },
+      "verified_with_comfyui": [],
+      "verified": false
+    }
+  ]
+}

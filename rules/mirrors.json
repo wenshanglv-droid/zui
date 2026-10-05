@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-05",
+  "pypi": [
+    { "id": "official", "label": "PyPI", "index_url": "https://pypi.org/simple" },
+    { "id": "aliyun", "label": "阿里云", "index_url": "https://mirrors.aliyun.com/pypi/simple/" },
+    { "id": "tsinghua", "label": "清华", "index_url": "https://pypi.tuna.tsinghua.edu.cn/simple" },
+    {
+      "id": "huaweicloud",
+      "label": "华为云",
+      "index_url": "https://repo.huaweicloud.com/repository/pypi/simple"
+    }
+  ],
+  "huggingface": [
+    { "id": "official", "label": "Official", "endpoint": "https://huggingface.co" },
+    { "id": "hf-mirror", "label": "hf-mirror.com", "endpoint": "https://hf-mirror.com" }
+  ],
+  "github": [
+    { "id": "direct", "label": "直连", "template": null },
+    { "id": "gh-proxy", "label": "gh-proxy", "template": "https://gh-proxy.com/{url}" }
+  ],
+  "uv": {
+    "enabled": true,
+    "note": "uv honours UV_DEFAULT_INDEX / UV_INDEX_URL; zui passes them through core/launch_env.py"
+  },
+  "defaults": {
+    "pypi": "official",
+    "huggingface": "official",
+    "github": "direct"
+  }
+}

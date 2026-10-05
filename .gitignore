@@ -1,0 +1,26 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+release/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.db
+*.db-wal
+*.db-shm
+*.log
+*.zip
+.DS_Store
+.env
+launcher/is_debug
+
+# 临时/生成产物
+.tmp_err.txt
+.tmp_run.json
+pytest-out.txt
+zui_page.html

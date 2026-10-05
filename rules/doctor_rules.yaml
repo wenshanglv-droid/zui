@@ -1,0 +1,107 @@
+schema_version: 1
+updated_at: '2026-10-05'
+checks:
+  - id: venv_home_missing
+    severity: critical
+    title: 虚拟环境解释器路径失效
+    detail: '{venv}/pyvenv.cfg 的 home 指向不存在的路径，常见于目录被移动或改名。'
+    fix: repair_pyvenv_home
+    platforms: [windows, darwin, linux]
+
+  - id: venv_scripts_missing
+    severity: critical
+    title: 虚拟环境 Scripts/bin 缺失
+    detail: '{venv}/{Scripts,bin} 目录不完整，无法启动目标环境。'
+    fix: repair_venv_scripts
+    platforms: [windows, darwin, linux]
+
+  - id: interpreter_unusable
+    severity: critical
+    title: 目标解释器无法执行
+    detail: '虚拟环境指向的 Python 无法启动。'
+    fix: repair_pyvenv_home
+    platforms: [windows, darwin, linux]
+
+  - id: env_ok
+    severity: info
+    title: 环境结构正常
+    detail: '未检测到结构性损坏。'
+    fix: null
+    platforms: [windows, darwin, linux]
+
+  - id: torch_stack_mismatch
+    severity: critical
+    title: torch / CUDA / Python 组合不匹配
+    detail: '检测到 torch 与 CUDA 运行时的组合不在规则矩阵内。'
+    fix: suggest_torch_stack
+    platforms: [windows, darwin, linux]
+
+  - id: missing_runtime_dll
+    severity: critical
+    title: 缺少运行时依赖
+    detail: '缺少 VC 运行库或 CUDA DLL。'
+    fix: suggest_runtime_repair
+    platforms: [windows]
+
+  - id: path_non_ascii
+    severity: warning
+    title: 路径含非 ASCII 字符
+    detail: '中文路径可能导致子进程乱码；zui 启动时会注入 PYTHONUTF8=1 与 -X utf8。'
+    fix: ensure_utf8_env
+    platforms: [windows]
+
+  - id: git_missing
+    severity: warning
+    title: 未检测到 Git
+    detail: '节点更新需要 Git；可使用便携 Git 或将使用 dulwich 兜底。'
+    fix: suggest_portable_git
+    platforms: [windows, darwin, linux]
+
+  - id: port_conflict
+    severity: warning
+    title: 目标端口被占用
+    detail: '按 pid-file 判断实例状态，端口被其它进程占用时给出来源而不是直接杀进程。'
+    fix: report_port_owner
+    platforms: [windows, darwin, linux]
+
+  - id: dependency_conflict
+    severity: warning
+    title: 依赖冲突
+    detail: '自定义节点 requirements 与当前 torch 栈冲突。'
+    fix: show_conflict_plan
+    platforms: [windows, darwin, linux]
+
+  - id: models_on_slow_disk
+    severity: warning
+    title: 模型位于低速磁盘
+    detail: '顺序读低于 300MB/s，大模型加载会显著变慢。'
+    fix: recommend_model_migration
+    platforms: [windows, darwin, linux]
+
+  - id: attention_backend_default
+    severity: warning
+    title: 未启用加速注意力后端
+    detail: '当前为 pytorch attention；可按 GPU 架构安装 sage-attention 等后端。'
+    fix: accelerate_attention
+    platforms: [windows, linux]
+
+  - id: weights_exceed_ram
+    severity: warning
+    title: 工作流权重接近或超过可用内存
+    detail: '权重合计超出物理内存时，mmap 会反复回源读盘，速度骤降。'
+    fix: suggest_quantized_or_split
+    platforms: [windows, darwin, linux]
+
+  - id: power_plan_balanced
+    severity: info
+    title: 电源计划为平衡模式
+    detail: '建议改为高性能 / 卓越性能以获得稳定的 GPU 频率。'
+    fix: suggest_high_performance
+    platforms: [windows]
+
+  - id: pagefile_on_slow_disk
+    severity: info
+    title: 页面文件位于低速磁盘
+    detail: '内存不足时换页会落到低速磁盘。'
+    fix: suggest_pagefile_move
+    platforms: [windows]

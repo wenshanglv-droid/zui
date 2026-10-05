@@ -1,0 +1,37 @@
+schema_version: 1
+updated_at: '2026-10-05'
+notes: >-
+  ComfyUI stdout mixes normal lines with tqdm frames. Always strip VT100 control
+  sequences first; a bare CR (\r) overwrites the current line and only LF finalizes it.
+
+timestamp: '^\[(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\]\s?(?P<msg>.*)$'
+
+lines:
+  got_prompt: 'got prompt'
+  requested_load: 'Requested to load (?P<model>.+)'
+  vae_load: 'VAE load device: (?P<device>[^,]+), offload device: [^,]+, dtype: (?P<dtype>.+)'
+  storage_policy: 'Model storage policy: fast_disk=(?P<flag>\w+)'
+  attention_backend: 'Using (?P<backend>[\w ]+) attention'
+  prompt_executed: 'Prompt executed in (?P<seconds>[\d.]+) seconds'
+  total_vram: 'Total VRAM (?P<vram>\d+) MB, total RAM (?P<ram>\d+) MB'
+  vram_state: 'Set vram state to: (?P<state>\w+)'
+  torch_version: 'pytorch version: (?P<version>.+)'
+  tqdm: '^(?P<percent>\d{1,3})%\|[^|]*\|\s*(?P<current>\d+)/(?P<total>\d+)\s*\[(?P<elapsed>[\d:]+)<(?P<remaining>[\d:]+),\s*(?P<rate>[\d.]+)(?P<unit>s/it|it/s)\]'
+
+phases:
+  - id: manager_wait
+    start: '\[START\] ComfyUI-Manager'
+    end: 'Found comfy_kitchen backend'
+  - id: init
+    start: 'Total VRAM'
+    end: 'got prompt'
+  - id: model_load
+    start: 'Requested to load'
+    end: 'Requested to load|python main.py|100%'
+  - id: sampling
+    start: '100%'
+    end: 'Prompt executed'
+
+vt100:
+  strip: '\x1B\[[0-?]*[ -/]*[@-~]'
+  carriage_return: '\r'
